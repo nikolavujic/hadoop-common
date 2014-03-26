@@ -18,6 +18,7 @@
 package org.apache.hadoop.net;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,9 @@ import org.apache.hadoop.classification.InterfaceStability;
 @InterfaceStability.Evolving
 public class CachedDNSToSwitchMapping extends AbstractDNSToSwitchMapping {
   private Map<String, String> cache = new ConcurrentHashMap<String, String>();
-
+  private Map<String, List<String>> dependencyCache = 
+      new ConcurrentHashMap<String, List<String>>();
+  
   /**
    * The uncached mapping
    */
@@ -124,6 +127,32 @@ public class CachedDNSToSwitchMapping extends AbstractDNSToSwitchMapping {
 
   }
 
+  /**
+   * Get dependencies in the topology for a given host
+   * @param name - host name for which we are getting dependency
+   * @return a list of hosts dependent on the provided host name
+   */
+  @Override
+  public List<String> getDependency(String name) {
+    // normalize all input names to be in the form of IP addresses
+    name = NetUtils.normalizeHostName(name);
+    
+    if (name==null) {
+      return Collections.emptyList();
+    }
+    
+    List<String> dependencies = dependencyCache.get(name);
+    if (dependencies == null) {
+      //not cached
+      dependencies = rawMapping.getDependency(name);
+      if(dependencies != null) {
+        dependencyCache.put(name, dependencies);
+      }
+    }
+    
+    return dependencies;
+  }
+  
   /**
    * Get the (host x switch) map.
    * @return a copy of the cached map of hosts to rack

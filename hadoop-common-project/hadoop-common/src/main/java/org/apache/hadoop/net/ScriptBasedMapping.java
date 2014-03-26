@@ -63,6 +63,9 @@ public final class ScriptBasedMapping extends CachedDNSToSwitchMapping {
    */
   static final String SCRIPT_FILENAME_KEY = 
                      CommonConfigurationKeys.NET_TOPOLOGY_SCRIPT_FILE_NAME_KEY ;
+  
+  static final String DEPENDENCY_SCRIPT_FILENAME_KEY = 
+      CommonConfigurationKeys.NET_DEPENDENCY_SCRIPT_FILE_NAME_KEY;
   /**
    * key to the argument count that the script supports
    * {@value}
@@ -134,7 +137,8 @@ public final class ScriptBasedMapping extends CachedDNSToSwitchMapping {
    */
   private static final class RawScriptBasedMapping
       extends AbstractDNSToSwitchMapping {
-    private String scriptName;
+    private String topologyScriptName;
+    private String dependencyScriptName;
     private int maxArgs; //max hostnames per call of the script
     private static final Log LOG =
         LogFactory.getLog(ScriptBasedMapping.class);
@@ -147,10 +151,12 @@ public final class ScriptBasedMapping extends CachedDNSToSwitchMapping {
     public void setConf (Configuration conf) {
       super.setConf(conf);
       if (conf != null) {
-        scriptName = conf.get(SCRIPT_FILENAME_KEY);
+        topologyScriptName = conf.get(SCRIPT_FILENAME_KEY);
+        dependencyScriptName = conf.get(DEPENDENCY_SCRIPT_FILENAME_KEY);
         maxArgs = conf.getInt(SCRIPT_ARG_COUNT_KEY, DEFAULT_ARG_COUNT);
       } else {
-        scriptName = null;
+        topologyScriptName = null;
+        dependencyScriptName = null;
         maxArgs = 0;
       }
     }
@@ -169,14 +175,14 @@ public final class ScriptBasedMapping extends CachedDNSToSwitchMapping {
         return m;
       }
 
-      if (scriptName == null) {
+      if (topologyScriptName == null) {
         for (String name : names) {
           m.add(NetworkTopology.DEFAULT_RACK);
         }
         return m;
       }
 
-      String output = runResolveCommand(names);
+      String output = runResolveCommand(names, topologyScriptName);
       if (output != null) {
         StringTokenizer allSwitchInfo = new StringTokenizer(output);
         while (allSwitchInfo.hasMoreTokens()) {
@@ -186,7 +192,7 @@ public final class ScriptBasedMapping extends CachedDNSToSwitchMapping {
 
         if (m.size() != names.size()) {
           // invalid number of entries returned by the script
-          LOG.error("Script " + scriptName + " returned "
+          LOG.error("Script " + topologyScriptName + " returned "
               + Integer.toString(m.size()) + " values when "
               + Integer.toString(names.size()) + " were expected.");
           return null;
@@ -200,6 +206,32 @@ public final class ScriptBasedMapping extends CachedDNSToSwitchMapping {
       return m;
     }
 
+    @Override
+    public List<String> getDependency(String name) {
+      if (name==null || dependencyScriptName==null) {
+        return Collections.emptyList();
+      }
+      
+      List <String> m = new LinkedList<String>();
+      List <String> args = new ArrayList<String>(1);
+      args.add(name);
+      
+      String output = runResolveCommand(args,dependencyScriptName);
+      if (output != null) {
+        StringTokenizer allSwitchInfo = new StringTokenizer(output);
+        while (allSwitchInfo.hasMoreTokens()) {
+          String switchInfo = allSwitchInfo.nextToken();
+          m.add(switchInfo);
+        }
+      } else {
+        // an error occurred. return null to signify this.
+        // (exn was already logged in runResolveCommand)
+        return null;
+      }
+      
+      return m;
+    }
+    
     /**
      * Build and execute the resolution command. The command is
      * executed in the directory specified by the system property
@@ -208,7 +240,7 @@ public final class ScriptBasedMapping extends CachedDNSToSwitchMapping {
      * @return null if the number of arguments is out of range,
      * or the output of the command.
      */
-    private String runResolveCommand(List<String> args) {
+    private String runResolveCommand(List<String> args, String scriptName) {
       int loopCount = 0;
       if (args.size() == 0) {
         return null;
@@ -256,12 +288,12 @@ public final class ScriptBasedMapping extends CachedDNSToSwitchMapping {
      */
     @Override
     public boolean isSingleSwitch() {
-      return scriptName == null;
+      return topologyScriptName == null;
     }
 
     @Override
     public String toString() {
-      return scriptName != null ? ("script " + scriptName) : NO_SCRIPT;
+      return topologyScriptName != null ? ("script " + topologyScriptName) : NO_SCRIPT;
     }
 
     @Override
