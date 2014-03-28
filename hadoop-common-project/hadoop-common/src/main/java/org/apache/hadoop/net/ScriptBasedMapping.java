@@ -293,7 +293,8 @@ public final class ScriptBasedMapping extends CachedDNSToSwitchMapping {
 
     @Override
     public String toString() {
-      return topologyScriptName != null ? ("script " + topologyScriptName) : NO_SCRIPT;
+      return topologyScriptName != null ? 
+          ("script " + topologyScriptName) : NO_SCRIPT;
     }
 
     @Override
