@@ -213,7 +213,7 @@ public class DatanodeDescriptor extends DatanodeInfo {
    * to communicate with the namenode
    */
   private boolean disallowed = false;
-
+  
   /**
    * DatanodeDescriptor constructor
    * @param nodeID id of the data node
@@ -709,6 +709,6 @@ public class DatanodeDescriptor extends DatanodeInfo {
         return false;
     }
     return true;
- }
+  }
 }
 

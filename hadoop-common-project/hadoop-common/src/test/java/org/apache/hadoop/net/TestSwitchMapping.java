@@ -23,6 +23,7 @@ import org.apache.hadoop.fs.CommonConfigurationKeys;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -115,6 +116,11 @@ public class TestSwitchMapping extends Assert {
     @Override
     public List<String> resolve(List<String> names) {
       return names;
+    }
+    
+    @Override
+    public List<String> getDependency(String name) {
+      return Collections.emptyList();
     }
 
     @Override

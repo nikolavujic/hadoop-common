@@ -38,16 +38,21 @@ public class TestScriptBasedMapping extends TestCase {
     Configuration conf = new Configuration();
     conf.setInt(ScriptBasedMapping.SCRIPT_ARG_COUNT_KEY,
                 ScriptBasedMapping.MIN_ALLOWABLE_ARGS - 1);
-    conf.set(ScriptBasedMapping.SCRIPT_FILENAME_KEY, "any-filename");
-    conf.set(ScriptBasedMapping.SCRIPT_FILENAME_KEY, "any-filename");
+    conf.set(ScriptBasedMapping.SCRIPT_FILENAME_KEY, "any-filename-1");
+    conf.set(ScriptBasedMapping.DEPENDENCY_SCRIPT_FILENAME_KEY, 
+        "any-filename-2");
+    conf.setInt(ScriptBasedMapping.SCRIPT_ARG_COUNT_KEY, 10);
+    
     ScriptBasedMapping mapping = createMapping(conf);
     List<String> names = new ArrayList<String>();
     names.add("some.machine.name");
     names.add("other.machine.name");
     List<String> result = mapping.resolve(names);
-    assertNull("Expected an empty list", result);
+    assertNull("Expected an empty list for resolve", result);
+    result = mapping.getDependency("some.machine.name");
+    assertNull("Expected an empty list for dependency", result);
   }
-
+  
   @Test
   public void testNoFilenameMeansSingleSwitch() throws Throwable {
     Configuration conf = new Configuration();

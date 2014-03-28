@@ -379,6 +379,31 @@ public class DatanodeManager {
   }
 
   /**
+   * Get data node by host name
+   *
+   * @param hostname
+   * @return DatanodeDescriptor or null if the node is not found.
+   * @throws IOException
+   */
+  public DatanodeDescriptor getDatanodeByHostName(String hostname) {
+    return host2DatanodeMap.getDataNodeByHostName(hostname);
+  }
+  
+  public String getStringForHost2DatanodeMap() {
+    return host2DatanodeMap.toString();
+  }
+  
+  
+  /**
+   * Adds datanode in host2DataNodeMap. This interface is used in unit tests.
+   * @param datanode
+   */
+  @VisibleForTesting
+  void addToHost2DataNodeMap(DatanodeDescriptor datanode) {
+    this.host2DatanodeMap.add(datanode);
+  }
+  
+  /**
    * Given datanode address or host name, returns the DatanodeDescriptor for the
    * same, or if it doesn't find the datanode, it looks for a machine local and
    * then rack local datanode, if a rack local datanode is not possible either,
@@ -683,6 +708,46 @@ public class DatanodeManager {
   }
 
   /**
+   * Resolve a node's dependencies in the network. If the DNS to switch 
+   * mapping fails then this method returns empty list of dependencies 
+   * @param node to get dependencies for
+   * @return List of dependent host names
+   */
+  private List<String> getNetworkDependenciesWithDefault(DatanodeInfo node) {
+    List<String> dependencies;
+    try {
+      dependencies = getNetworkDependencies(node);
+    } catch (UnresolvedTopologyException e) {
+      LOG.error("Unresolved dependency mapping for host " + 
+          node.getHostName() +". Continuing with an empty dependency list");
+      dependencies = Collections.emptyList();
+    }
+    return dependencies;
+  }
+  
+  /**
+   * Resolves a node's dependencies in the network. If the DNS to switch 
+   * mapping fails to get dependencies, then this method throws 
+   * UnresolvedTopologyException. 
+   * @param node to get dependencies for
+   * @return List of dependent host names 
+   * @throws UnresolvedTopologyException if the DNS to switch mapping fails
+   */
+  private List<String> getNetworkDependencies(DatanodeInfo node)
+      throws UnresolvedTopologyException {
+    //Get dependencies
+    List<String> dependencies = dnsToSwitchMapping.getDependency(node.getHostName());
+    if(dependencies == null) {
+      LOG.error("The dependency call returned null for host " + 
+          node.getHostName());
+      throw new UnresolvedTopologyException("The dependency call returned " + 
+          "null for host " + node.getHostName());
+    }
+    
+    return dependencies;
+  }
+  
+  /**
    * Remove an already decommissioned data node who is neither in include nor
    * exclude hosts lists from the the list of live or dead nodes.  This is used
    * to not display an already decommssioned data node to the operators.
@@ -874,12 +939,14 @@ public class DatanodeManager {
           nodeS.setDisallowed(false); // Node is in the include list
 
           // resolve network location
-          if(this.rejectUnresolvedTopologyDN)
-          {
-            nodeS.setNetworkLocation(resolveNetworkLocation(nodeS));  
+          if(this.rejectUnresolvedTopologyDN) {
+            nodeS.setNetworkLocation(resolveNetworkLocation(nodeS));
+            nodeS.setDependentHostNames(getNetworkDependencies(nodeS));
           } else {
             nodeS.setNetworkLocation(
                 resolveNetworkLocationWithFallBackToDefaultLocation(nodeS));
+            nodeS.setDependentHostNames(
+                getNetworkDependenciesWithDefault(nodeS));
           }
           getNetworkTopology().add(nodeS);
             
@@ -905,9 +972,12 @@ public class DatanodeManager {
         // resolve network location
         if(this.rejectUnresolvedTopologyDN) {
           nodeDescr.setNetworkLocation(resolveNetworkLocation(nodeDescr));
+          nodeDescr.setDependentHostNames(getNetworkDependencies(nodeDescr));
         } else {
           nodeDescr.setNetworkLocation(
               resolveNetworkLocationWithFallBackToDefaultLocation(nodeDescr));
+          nodeDescr.setDependentHostNames(
+              getNetworkDependenciesWithDefault(nodeDescr));
         }
         networktopology.add(nodeDescr);
         nodeDescr.setSoftwareVersion(nodeReg.getSoftwareVersion());

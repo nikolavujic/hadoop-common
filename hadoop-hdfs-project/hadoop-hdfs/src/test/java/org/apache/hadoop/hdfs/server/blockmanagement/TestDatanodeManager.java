@@ -19,6 +19,7 @@
 package org.apache.hadoop.hdfs.server.blockmanagement;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -200,6 +201,11 @@ public class TestDatanodeManager {
     @Override
     public List<String> resolve(List<String> names) {
       return null;
+    }
+    
+    @Override
+    public List<String> getDependency(String name) {
+      return Collections.emptyList();
     }
 
     @Override
