@@ -121,7 +121,11 @@ Trunk (Unreleased)
     HADOOP-10342. Add a new method to UGI to use a Kerberos login subject to
     build a new UGI. (Larry McCay via omalley)
 
-    HADOOP-9968. Makes ProxyUsers to work with NetGroups (Benoy Antony via ddas)
+    HADOOP-9968. Makes ProxyUsers to work with NetGroups (Benoy Antony via 
+    ddas)
+
+    HADOOP-10237. JavaKeyStoreProvider needs to set keystore permissions 
+    correctly. (Larry McCay via omalley)
 
   BUG FIXES
 
@@ -311,6 +315,15 @@ Release 2.5.0 - UNRELEASED
 
   IMPROVEMENTS
 
+    HADOOP-10451. Remove unused field and imports from SaslRpcServer.
+    (Benoy Antony via jing9)
+
+    HADOOP-10345. Sanitize the the inputs (groups and hosts) for the proxyuser
+    configuration. (Benoy Antony via jing9)
+
+    HADOOP-10454. Provide FileContext version of har file system. (Kihwal Lee
+    via jeagles)
+
   OPTIMIZATIONS
 
   BUG FIXES 
@@ -325,7 +338,34 @@ Release 2.5.0 - UNRELEASED
     removes unused FileContext.getFileStatus(..) and fixes various javac
     warnings.  (szetszwo)
 
-Release 2.4.0 - UNRELEASED
+    HADOOP-10414. Incorrect property name for RefreshUserMappingProtocol in
+    hadoop-policy.xml. (Joey Echeverria via atm)
+
+    HADOOP-10459. distcp V2 doesn't preserve root dir's attributes when -p is
+    specified. (Yongjun Zhang via atm)
+
+    HADOOP-10462. DF#getFilesystem is not parsing the command output. 
+    (Akira AJISAKA via umamahesh)
+
+Release 2.4.1 - UNRELEASED
+
+  INCOMPATIBLE CHANGES
+
+  NEW FEATURES
+
+  IMPROVEMENTS
+
+  OPTIMIZATIONS
+
+  BUG FIXES 
+
+    HADOOP-10455. When there is an exception, ipc.Server should first check
+    whether it is an terse exception.  (szetszwo)
+
+    HADOOP-10456. Bug in Configuration.java exposed by Spark
+    (ConcurrentModificationException).  (Nishkam Ravi via cnauroth)
+
+Release 2.4.0 - 2014-04-07 
 
   INCOMPATIBLE CHANGES
 
@@ -462,6 +502,17 @@ Release 2.4.0 - UNRELEASED
 
     HADOOP-10441. Namenode metric "rpc.RetryCache/NameNodeRetryCache.CacheHit"
     can't be correctly processed by Ganglia. (jing9)
+
+    HADOOP-10449. Fix the javac warnings in the security package.  (szetszwo)
+
+    HADOOP-10450. Build zlib native code bindings in hadoop.dll for Windows.
+    (cnauroth)
+
+    HADOOP-10301. AuthenticationFilter should return Forbidden for failed
+    authentication. (Daryn Sharp via jing9)
+
+    HADOOP-9525. Add tests that validate winutils chmod behavior on folders
+    (ivanmi)
 
   BREAKDOWN OF HADOOP-10184 SUBTASKS AND RELATED JIRAS
 
