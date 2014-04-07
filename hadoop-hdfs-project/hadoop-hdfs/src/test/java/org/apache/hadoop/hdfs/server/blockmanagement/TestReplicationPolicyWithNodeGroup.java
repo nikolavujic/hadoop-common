@@ -46,9 +46,7 @@ import org.apache.hadoop.test.PathUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mortbay.log.Log;
 
-import sun.util.LocaleServiceProviderPool.LocalizedObjectGetter;
 
 public class TestReplicationPolicyWithNodeGroup {
   private static final int BLOCK_SIZE = 1024;
