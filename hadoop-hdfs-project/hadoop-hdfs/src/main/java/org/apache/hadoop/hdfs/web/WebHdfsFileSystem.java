@@ -490,8 +490,25 @@ public class WebHdfsFileSystem extends FileSystem
 
     private void connect(boolean doOutput) throws IOException {
       conn.setRequestMethod(op.getType().toString());
-      conn.setDoOutput(doOutput);
       conn.setInstanceFollowRedirects(false);
+      switch (op.getType()) {
+        // if not sending a message body for a POST or PUT operation, need
+        // to ensure the server/proxy knows this 
+        case POST:
+        case PUT: {
+          conn.setDoOutput(true);
+          if (!doOutput) {
+            // explicitly setting content-length to 0 won't do spnego!!
+            // opening and closing the stream will send "Content-Length: 0"
+            conn.getOutputStream().close();
+          }
+          break;
+        }
+        default: {
+          conn.setDoOutput(doOutput);
+          break;
+        }
+      }
       conn.connect();
     }
 
@@ -962,7 +979,8 @@ public class WebHdfsFileSystem extends FileSystem
   }
 
   static class OffsetUrlInputStream extends ByteRangeInputStream {
-    OffsetUrlInputStream(OffsetUrlOpener o, OffsetUrlOpener r) {
+    OffsetUrlInputStream(OffsetUrlOpener o, OffsetUrlOpener r)
+        throws IOException {
       super(o, r);
     }
 

@@ -15,34 +15,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.apache.hadoop.record.compiler;
+package org.apache.hadoop.hdfs.server.namenode;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 
 /**
- * const definitions for Record I/O compiler
- * 
- * @deprecated Replaced by <a href="http://hadoop.apache.org/avro/">Avro</a>.
+ * JMX information of the secondary NameNode
  */
-@Deprecated
-@InterfaceAudience.Public
-@InterfaceStability.Stable
-public class Consts {
-  
-  /** Cannot create a new instance */
-  private Consts() {
-  }
-  
-  // prefix to use for variables in generated classes
-  public static final String RIO_PREFIX = "_rio_";
-  // other vars used in generated classes
-  public static final String RTI_VAR = RIO_PREFIX + "recTypeInfo";
-  public static final String RTI_FILTER = RIO_PREFIX + "rtiFilter";
-  public static final String RTI_FILTER_FIELDS = RIO_PREFIX + "rtiFilterFields";
-  public static final String RECORD_OUTPUT = RIO_PREFIX + "a";
-  public static final String RECORD_INPUT = RIO_PREFIX + "a";
-  public static final String TAG = RIO_PREFIX + "tag";
-  
+@InterfaceAudience.Private
+@InterfaceStability.Evolving
+public interface SecondaryNameNodeInfoMXBean extends VersionInfoMXBean {
+  /**
+   * Gets the host and port colon separated.
+   */
+  public String getHostAndPort();
+
+  /**
+   * @return the timestamp of when the SNN starts
+   */
+  public long getStartTime();
+
+  /**
+   * @return the timestamp of the last checkpoint
+   */
+  public long getLastCheckpointTime();
+
+  /**
+   * @return the directories that store the checkpoint images
+   */
+  public String[] getCheckpointDirectories();
+  /**
+   * @return the directories that store the edit logs
+   */
+  public String[] getCheckpointEditlogDirectories();
 }

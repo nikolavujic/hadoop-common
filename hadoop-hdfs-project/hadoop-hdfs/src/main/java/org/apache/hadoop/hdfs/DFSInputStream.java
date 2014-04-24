@@ -389,7 +389,7 @@ implements ByteBufferReadable, CanSetDropBehind, CanSetReadahead,
    * Get block at the specified position.
    * Fetch it from the namenode if not cached.
    * 
-   * @param offset
+   * @param offset block corresponding to this offset in file is returned
    * @param updatePosition whether to update current position
    * @return located block
    * @throws IOException
@@ -453,14 +453,13 @@ implements ByteBufferReadable, CanSetDropBehind, CanSetReadahead,
    * Get blocks in the specified range.
    * Fetch them from the namenode if not cached. This function
    * will not get a read request beyond the EOF.
-   * @param offset
-   * @param length
+   * @param offset starting offset in file
+   * @param length length of data
    * @return consequent segment of located blocks
    * @throws IOException
    */
-  private synchronized List<LocatedBlock> getBlockRange(long offset, 
-                                                        long length) 
-                                                      throws IOException {
+  private synchronized List<LocatedBlock> getBlockRange(long offset,
+      long length)  throws IOException {
     // getFileLength(): returns total file length
     // locatedBlocks.getFileLength(): returns length of completed blocks
     if (offset >= getFileLength()) {
@@ -847,7 +846,6 @@ implements ByteBufferReadable, CanSetDropBehind, CanSetReadahead,
 
   /**
    * Add corrupted block replica into map.
-   * @param corruptedBlockMap 
    */
   private void addIntoCorruptedBlockMap(ExtendedBlock blk, DatanodeInfo node, 
       Map<ExtendedBlock, Set<DatanodeInfo>> corruptedBlockMap) {
@@ -983,12 +981,15 @@ implements ByteBufferReadable, CanSetDropBehind, CanSetReadahead,
     return new Callable<ByteBuffer>() {
       @Override
       public ByteBuffer call() throws Exception {
-        byte[] buf = bb.array();
-        int offset = bb.position();
-        actualGetFromOneDataNode(datanode, block, start, end, buf, offset,
-            corruptedBlockMap);
-        latch.countDown();
-        return bb;
+        try {
+          byte[] buf = bb.array();
+          int offset = bb.position();
+          actualGetFromOneDataNode(datanode, block, start, end, buf, offset,
+              corruptedBlockMap);
+          return bb;
+        } finally {
+          latch.countDown();
+        }
       }
     };
   }
@@ -1088,20 +1089,12 @@ implements ByteBufferReadable, CanSetDropBehind, CanSetReadahead,
    * int, Map)} except we start up a second, parallel, 'hedged' read
    * if the first read is taking longer than configured amount of
    * time.  We then wait on which ever read returns first.
-   * 
-   * @param block
-   * @param start
-   * @param end
-   * @param buf
-   * @param offset
-   * @param corruptedBlockMap
-   * @throws IOException
    */
   private void hedgedFetchBlockByteRange(LocatedBlock block, long start,
       long end, byte[] buf, int offset,
       Map<ExtendedBlock, Set<DatanodeInfo>> corruptedBlockMap)
       throws IOException {
-    ArrayList<Future<ByteBuffer>> futures = null;
+    ArrayList<Future<ByteBuffer>> futures = new ArrayList<Future<ByteBuffer>>();
     ArrayList<DatanodeInfo> ignored = new ArrayList<DatanodeInfo>();
     ByteBuffer bb = null;
     int len = (int) (end - start + 1);
@@ -1112,7 +1105,7 @@ implements ByteBufferReadable, CanSetDropBehind, CanSetReadahead,
       DNAddrPair chosenNode = null;
       Future<ByteBuffer> future = null;
       // futures is null if there is no request already executing.
-      if (futures == null) {
+      if (futures.isEmpty()) {
         // chooseDataNode is a commitment.  If no node, we go to
         // the NN to reget block locations.  Only go here on first read.
         chosenNode = chooseDataNode(block, ignored);
@@ -1130,7 +1123,6 @@ implements ByteBufferReadable, CanSetDropBehind, CanSetReadahead,
           // Ignore this node on next go around.
           ignored.add(chosenNode.info);
           dfsClient.getHedgedReadMetrics().incHedgedReadOps();
-          futures = new ArrayList<Future<ByteBuffer>>();
           futures.add(future);
           continue; // no need to refresh block locations
         } catch (InterruptedException e) {

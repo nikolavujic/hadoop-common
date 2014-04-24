@@ -1022,6 +1022,7 @@ class NameNodeRpcServer implements NamenodeProtocols {
     for(StorageBlockReport r : reports) {
       final BlockListAsLongs blocks = new BlockListAsLongs(r.getBlocks());
       hasStaleStorages = bm.processReport(nodeReg, r.getStorage(), poolId, blocks);
+      metrics.incrStorageBlockReportOps();
     }
 
     if (nn.getFSImage().isUpgradeFinalized() &&
@@ -1179,9 +1180,8 @@ class NameNodeRpcServer implements NamenodeProtocols {
 
   /**
    * Verify version.
-   * 
-   * @param version
-   * @throws IOException
+   * @param version layout version
+   * @throws IOException on layout version mismatch
    */
   void verifyLayoutVersion(int version) throws IOException {
     if (version != HdfsConstants.NAMENODE_LAYOUT_VERSION)

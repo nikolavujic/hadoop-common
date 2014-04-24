@@ -156,7 +156,7 @@ public class FSImage implements Closeable {
    * directory to allow them to format anyway. Otherwise, returns
    * false, unless 'force' is specified.
    * 
-   * @param force format regardless of whether dirs exist
+   * @param force if true, format regardless of whether dirs exist
    * @param interactive prompt the user when a dir exists
    * @return true if formatting should proceed
    * @throws IOException if some storage cannot be accessed
@@ -229,7 +229,8 @@ public class FSImage implements Closeable {
           + RollingUpgradeStartupOption.STARTED.getOptionString()
           + "\" option if a rolling upgraded is already started;"
           + " or restart NameNode with the \""
-          + StartupOption.UPGRADE + "\" to start a new upgrade.");
+          + StartupOption.UPGRADE.getName() + "\" option to start"
+          + " a new upgrade.");
     }
     
     storage.processStartupOptionsForUpgrade(startOpt, layoutVersion);
@@ -1001,7 +1002,6 @@ public class FSImage implements Closeable {
   /**
    * Save the contents of the FS image to a new image file in each of the
    * current storage directories.
-   * @param canceler
    */
   public synchronized void saveNamespace(FSNamesystem source, NameNodeFile nnf,
       Canceler canceler) throws IOException {

@@ -34,10 +34,6 @@ import org.apache.hadoop.hdfs.protocol.HdfsConstants.DatanodeReportType;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeDescriptor.BlockTargetPair;
 import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeDescriptor.CachedBlocksList;
 import org.apache.hadoop.hdfs.server.namenode.CachedBlock;
-import org.apache.hadoop.hdfs.server.namenode.HostFileManager;
-import org.apache.hadoop.hdfs.server.namenode.HostFileManager.Entry;
-import org.apache.hadoop.hdfs.server.namenode.HostFileManager.EntrySet;
-import org.apache.hadoop.hdfs.server.namenode.HostFileManager.MutableEntrySet;
 import org.apache.hadoop.hdfs.server.namenode.NameNode;
 import org.apache.hadoop.hdfs.server.namenode.Namesystem;
 import org.apache.hadoop.hdfs.server.protocol.*;
@@ -53,6 +49,7 @@ import org.apache.hadoop.util.Time;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 
@@ -211,13 +208,11 @@ public class DatanodeManager {
     // in the cache; so future calls to resolve will be fast.
     if (dnsToSwitchMapping instanceof CachedDNSToSwitchMapping) {
       final ArrayList<String> locations = new ArrayList<String>();
-      for (Entry entry : hostFileManager.getIncludes()) {
-        if (!entry.getIpAddress().isEmpty()) {
-          locations.add(entry.getIpAddress());
-        }
+      for (InetSocketAddress addr : hostFileManager.getIncludes()) {
+        locations.add(addr.getAddress().getHostAddress());
       }
       dnsToSwitchMapping.resolve(locations);
-    };
+    }
 
     final long heartbeatIntervalSeconds = conf.getLong(
         DFSConfigKeys.DFS_HEARTBEAT_INTERVAL_KEY,
@@ -465,9 +460,9 @@ public class DatanodeManager {
   }
 
   /**
-   * Get data node by storage ID.
+   * Get data node by datanode ID.
    * 
-   * @param nodeID
+   * @param nodeID datanode ID
    * @return DatanodeDescriptor or null if the node is not found.
    * @throws UnregisteredNodeException
    */
@@ -1089,21 +1084,18 @@ public class DatanodeManager {
 
   /** @return list of datanodes where decommissioning is in progress. */
   public List<DatanodeDescriptor> getDecommissioningNodes() {
-    namesystem.readLock();
-    try {
-      final List<DatanodeDescriptor> decommissioningNodes
-          = new ArrayList<DatanodeDescriptor>();
-      final List<DatanodeDescriptor> results = getDatanodeListForReport(
-          DatanodeReportType.LIVE);
-      for(DatanodeDescriptor node : results) {
-        if (node.isDecommissionInProgress()) {
-          decommissioningNodes.add(node);
-        }
+    // There is no need to take namesystem reader lock as
+    // getDatanodeListForReport will synchronize on datanodeMap
+    final List<DatanodeDescriptor> decommissioningNodes
+        = new ArrayList<DatanodeDescriptor>();
+    final List<DatanodeDescriptor> results = getDatanodeListForReport(
+        DatanodeReportType.LIVE);
+    for(DatanodeDescriptor node : results) {
+      if (node.isDecommissionInProgress()) {
+        decommissioningNodes.add(node);
       }
-      return decommissioningNodes;
-    } finally {
-      namesystem.readUnlock();
     }
+    return decommissioningNodes;
   }
   
   /* Getter and Setter for stale DataNodes related attributes */
@@ -1156,23 +1148,20 @@ public class DatanodeManager {
       throw new HadoopIllegalArgumentException("Both live and dead lists are null");
     }
 
-    namesystem.readLock();
-    try {
-      final List<DatanodeDescriptor> results =
-          getDatanodeListForReport(DatanodeReportType.ALL);    
-      for(DatanodeDescriptor node : results) {
-        if (isDatanodeDead(node)) {
-          if (dead != null) {
-            dead.add(node);
-          }
-        } else {
-          if (live != null) {
-            live.add(node);
-          }
+    // There is no need to take namesystem reader lock as
+    // getDatanodeListForReport will synchronize on datanodeMap
+    final List<DatanodeDescriptor> results =
+        getDatanodeListForReport(DatanodeReportType.ALL);
+    for(DatanodeDescriptor node : results) {
+      if (isDatanodeDead(node)) {
+        if (dead != null) {
+          dead.add(node);
+        }
+      } else {
+        if (live != null) {
+          live.add(node);
         }
       }
-    } finally {
-      namesystem.readUnlock();
     }
     
     if (removeDecommissionNode) {
@@ -1269,46 +1258,45 @@ public class DatanodeManager {
     boolean listDeadNodes = type == DatanodeReportType.ALL ||
                             type == DatanodeReportType.DEAD;
 
-    ArrayList<DatanodeDescriptor> nodes = null;
-    final MutableEntrySet foundNodes = new MutableEntrySet();
+    ArrayList<DatanodeDescriptor> nodes;
+    final HostFileManager.HostSet foundNodes = new HostFileManager.HostSet();
+    final HostFileManager.HostSet includedNodes = hostFileManager.getIncludes();
+    final HostFileManager.HostSet excludedNodes = hostFileManager.getExcludes();
+
     synchronized(datanodeMap) {
       nodes = new ArrayList<DatanodeDescriptor>(datanodeMap.size());
-      Iterator<DatanodeDescriptor> it = datanodeMap.values().iterator();
-      while (it.hasNext()) { 
-        DatanodeDescriptor dn = it.next();
+      for (DatanodeDescriptor dn : datanodeMap.values()) {
         final boolean isDead = isDatanodeDead(dn);
-        if ( (isDead && listDeadNodes) || (!isDead && listLiveNodes) ) {
-          nodes.add(dn);
+        if ((listLiveNodes && !isDead) || (listDeadNodes && isDead)) {
+            nodes.add(dn);
         }
-        foundNodes.add(dn);
+        foundNodes.add(HostFileManager.resolvedAddressFromDatanodeID(dn));
       }
     }
 
     if (listDeadNodes) {
-      final EntrySet includedNodes = hostFileManager.getIncludes();
-      final EntrySet excludedNodes = hostFileManager.getExcludes();
-      for (Entry entry : includedNodes) {
-        if ((foundNodes.find(entry) == null) &&
-            (excludedNodes.find(entry) == null)) {
-          // The remaining nodes are ones that are referenced by the hosts
-          // files but that we do not know about, ie that we have never
-          // head from. Eg. an entry that is no longer part of the cluster
-          // or a bogus entry was given in the hosts files
-          //
-          // If the host file entry specified the xferPort, we use that.
-          // Otherwise, we guess that it is the default xfer port.
-          // We can't ask the DataNode what it had configured, because it's
-          // dead.
-          DatanodeDescriptor dn =
-              new DatanodeDescriptor(new DatanodeID(entry.getIpAddress(),
-                  entry.getPrefix(), "",
-                  entry.getPort() == 0 ? defaultXferPort : entry.getPort(),
-                  defaultInfoPort, defaultInfoSecurePort, defaultIpcPort));
-          dn.setLastUpdate(0); // Consider this node dead for reporting
-          nodes.add(dn);
+      for (InetSocketAddress addr : includedNodes) {
+        if (foundNodes.matchedBy(addr) || excludedNodes.match(addr)) {
+          continue;
         }
+        // The remaining nodes are ones that are referenced by the hosts
+        // files but that we do not know about, ie that we have never
+        // head from. Eg. an entry that is no longer part of the cluster
+        // or a bogus entry was given in the hosts files
+        //
+        // If the host file entry specified the xferPort, we use that.
+        // Otherwise, we guess that it is the default xfer port.
+        // We can't ask the DataNode what it had configured, because it's
+        // dead.
+        DatanodeDescriptor dn = new DatanodeDescriptor(new DatanodeID(addr
+                .getAddress().getHostAddress(), addr.getHostName(), "",
+                addr.getPort() == 0 ? defaultXferPort : addr.getPort(),
+                defaultInfoPort, defaultInfoSecurePort, defaultIpcPort));
+        dn.setLastUpdate(0); // Consider this node dead for reporting
+        nodes.add(dn);
       }
     }
+
     if (LOG.isDebugEnabled()) {
       LOG.debug("getDatanodeListForReport with " +
           "includedNodes = " + hostFileManager.getIncludes() +

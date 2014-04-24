@@ -15,38 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.apache.hadoop.record.compiler;
+package org.apache.hadoop.hdfs.server.namenode;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 
-/**
- * A thin wrappper around record field.
- * 
- * @deprecated Replaced by <a href="http://hadoop.apache.org/avro/">Avro</a>.
- */
-@Deprecated
-@InterfaceAudience.Public
-@InterfaceStability.Stable
-public class JField<T> {
-  
-  private String name;
-  private T type;
-  
+@InterfaceAudience.Private
+@InterfaceStability.Evolving
+public interface VersionInfoMXBean {
   /**
-   * Creates a new instance of JField
+   * @return the compilation information which contains date, user and branch
    */
-  public JField(String name, T type) {
-    this.type = type;
-    this.name = name;
-  }
-  
-  String getName() {
-    return name;
-  }
-  
-  T getType() {
-    return type;
-  }
+  public String getCompileInfo();
+
+  /**
+   * @return the software version
+   */
+  public String getSoftwareVersion();
 }

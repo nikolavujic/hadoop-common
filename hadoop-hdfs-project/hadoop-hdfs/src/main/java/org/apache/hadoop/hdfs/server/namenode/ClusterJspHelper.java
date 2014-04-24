@@ -358,8 +358,8 @@ class ClusterJspHelper {
       nn.missingBlocksCount = getProperty(props, "NumberOfMissingBlocks")
           .getLongValue();
       nn.httpAddress = httpAddress.toURL();
-      getLiveNodeCount(getProperty(props, "LiveNodes").getValueAsText(), nn);
-      getDeadNodeCount(getProperty(props, "DeadNodes").getValueAsText(), nn);
+      getLiveNodeCount(getProperty(props, "LiveNodes").asText(), nn);
+      getDeadNodeCount(getProperty(props, "DeadNodes").asText(), nn);
       nn.softwareVersion = getProperty(props, "SoftwareVersion").getTextValue();
       return nn;
     }
@@ -373,11 +373,11 @@ class ClusterJspHelper {
         Map<String, Map<String, String>> statusMap, String props)
         throws IOException, MalformedObjectNameException {
       getLiveNodeStatus(statusMap, host, getProperty(props, "LiveNodes")
-          .getValueAsText());
+          .asText());
       getDeadNodeStatus(statusMap, host, getProperty(props, "DeadNodes")
-          .getValueAsText());
+          .asText());
       getDecommissionNodeStatus(statusMap, host,
-          getProperty(props, "DecomNodes").getValueAsText());
+          getProperty(props, "DecomNodes").asText());
     }
   
     /**
@@ -388,7 +388,6 @@ class ClusterJspHelper {
      *          is an inner map whose key is namenode, value is datanode status.
      *          reported by each namenode.
      * @param namenodeHost host name of the namenode
-     * @param decomnode update DecommissionNode with alive node status
      * @param json JSON string contains datanode status
      * @throws IOException
      */
@@ -426,7 +425,6 @@ class ClusterJspHelper {
      * @param statusMap map with key being datanode, value being an
      *          inner map (key:namenode, value:decommisionning state).
      * @param host datanode hostname
-     * @param decomnode DecommissionNode
      * @param json String
      * @throws IOException
      */
@@ -468,7 +466,6 @@ class ClusterJspHelper {
      * @param dataNodeStatusMap map with key being datanode, value being an
      *          inner map (key:namenode, value:decommisionning state).
      * @param host datanode
-     * @param decomnode DecommissionNode
      * @param json String
      */
     private static void getDecommissionNodeStatus(

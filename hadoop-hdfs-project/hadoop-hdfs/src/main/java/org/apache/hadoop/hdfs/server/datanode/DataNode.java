@@ -646,7 +646,6 @@ public class DataNode extends Configured
   
   /**
    * Return the BPOfferService instance corresponding to the given block.
-   * @param block
    * @return the BPOS
    * @throws IOException if no such BPOS can be found
    */
@@ -811,9 +810,7 @@ public class DataNode extends Configured
   /**
    * After the block pool has contacted the NN, registers that block pool
    * with the secret manager, updating it with the secrets provided by the NN.
-   * @param bpRegistration
-   * @param blockPoolId
-   * @throws IOException
+   * @throws IOException on error
    */
   private synchronized void registerBlockPoolWithSecretManager(
       DatanodeRegistration bpRegistration, String blockPoolId) throws IOException {
@@ -981,9 +978,8 @@ public class DataNode extends Configured
   
   /**
    * get BP registration by blockPool id
-   * @param bpid
    * @return BP registration object
-   * @throws IOException
+   * @throws IOException on error
    */
   @VisibleForTesting
   public DatanodeRegistration getDNRegistrationForBP(String bpid) 
@@ -1687,8 +1683,9 @@ public class DataNode extends Configured
   /**
    * After a block becomes finalized, a datanode increases metric counter,
    * notifies namenode, and adds it to the block scanner
-   * @param block
-   * @param delHint
+   * @param block block to close
+   * @param delHint hint on which excess block to delete
+   * @param storageUuid UUID of the storage where block is stored
    */
   void closeBlock(ExtendedBlock block, String delHint, String storageUuid) {
     metrics.incrBlocksWritten();
@@ -1761,7 +1758,7 @@ public class DataNode extends Configured
     Collection<StorageLocation> dataLocations = getStorageLocations(conf);
     UserGroupInformation.setConfiguration(conf);
     SecurityUtil.login(conf, DFS_DATANODE_KEYTAB_FILE_KEY,
-        DFS_DATANODE_USER_NAME_KEY);
+        DFS_DATANODE_KERBEROS_PRINCIPAL_KEY);
     return makeInstance(dataLocations, conf, resources);
   }
 
@@ -1776,8 +1773,15 @@ public class DataNode extends Configured
       try {
         location = StorageLocation.parse(locationString);
       } catch (IOException ioe) {
-        throw new IllegalArgumentException("Failed to parse conf property "
-            + DFS_DATANODE_DATA_DIR_KEY + ": " + locationString, ioe);
+        LOG.error("Failed to initialize storage directory " + locationString
+            + ". Exception details: " + ioe);
+        // Ignore the exception.
+        continue;
+      } catch (SecurityException se) {
+        LOG.error("Failed to initialize storage directory " + locationString
+                     + ". Exception details: " + se);
+        // Ignore the exception.
+        continue;
       }
 
       locations.add(location);
@@ -2311,8 +2315,8 @@ public class DataNode extends Configured
    *          The corresponding replica must be an RBW or a Finalized.
    *          Its GS and numBytes will be set to
    *          the stored GS and the visible length. 
-   * @param targets
-   * @param client
+   * @param targets targets to transfer the block to
+   * @param client client name
    */
   void transferReplicaForPipelineRecovery(final ExtendedBlock b,
       final DatanodeInfo[] targets, final String client) throws IOException {

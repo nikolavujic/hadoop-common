@@ -622,11 +622,11 @@ public class TestCheckpoint {
   }
 
   private File filePathContaining(final String substring) {
-    return Mockito.<File>argThat(
+    return Mockito.argThat(
         new ArgumentMatcher<File>() {
           @Override
           public boolean matches(Object argument) {
-            String path = ((File)argument).getAbsolutePath();
+            String path = ((File) argument).getAbsolutePath();
             return path.contains(substring);
           }
         });
@@ -1897,7 +1897,12 @@ public class TestCheckpoint {
           .format(true).build();
       int origPort = cluster.getNameNodePort();
       int origHttpPort = cluster.getNameNode().getHttpAddress().getPort();
-      secondary = startSecondaryNameNode(conf);
+      Configuration snnConf = new Configuration(conf);
+      File checkpointDir = new File(MiniDFSCluster.getBaseDirectory(),
+        "namesecondary");
+      snnConf.set(DFSConfigKeys.DFS_NAMENODE_CHECKPOINT_DIR_KEY,
+        checkpointDir.getAbsolutePath());
+      secondary = startSecondaryNameNode(snnConf);
 
       // secondary checkpoints once
       secondary.doCheckpoint();
@@ -2436,8 +2441,8 @@ public class TestCheckpoint {
   
   private static List<File> getCheckpointCurrentDirs(SecondaryNameNode secondary) {
     List<File> ret = Lists.newArrayList();
-    for (URI u : secondary.getCheckpointDirs()) {
-      File checkpointDir = new File(u.getPath());
+    for (String u : secondary.getCheckpointDirectories()) {
+      File checkpointDir = new File(URI.create(u).getPath());
       ret.add(new File(checkpointDir, "current"));
     }
     return ret;
