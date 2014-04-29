@@ -20,7 +20,6 @@ package org.apache.hadoop.net;
 import org.apache.hadoop.conf.Configuration;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,11 +110,6 @@ public class StaticMapping extends AbstractDNSToSwitchMapping  {
       }
       return m;
     }
-  }
-  
-  @Override
-  public List<String> getDependency(String name) {
-    return Collections.emptyList();
   }
 
   /**

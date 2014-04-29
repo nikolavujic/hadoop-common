@@ -730,18 +730,24 @@ public class DatanodeManager {
    */
   private List<String> getNetworkDependencies(DatanodeInfo node)
       throws UnresolvedTopologyException {
-    //Get dependencies
-    List<String> dependencies = dnsToSwitchMapping.getDependency(node.getHostName());
-    if(dependencies == null) {
-      LOG.error("The dependency call returned null for host " + 
-          node.getHostName());
-      throw new UnresolvedTopologyException("The dependency call returned " + 
-          "null for host " + node.getHostName());
+    List<String> dependencies = Collections.emptyList();
+
+    if (dnsToSwitchMapping instanceof DNSToSwitchMappingWithDependency) {
+      //Get dependencies
+      dependencies = 
+          ((DNSToSwitchMappingWithDependency)dnsToSwitchMapping).getDependency(
+              node.getHostName());
+      if(dependencies == null) {
+        LOG.error("The dependency call returned null for host " + 
+            node.getHostName());
+        throw new UnresolvedTopologyException("The dependency call returned " + 
+            "null for host " + node.getHostName());
+      }
     }
-    
+
     return dependencies;
   }
-  
+
   /**
    * Remove an already decommissioned data node who is neither in include nor
    * exclude hosts lists from the the list of live or dead nodes.  This is used

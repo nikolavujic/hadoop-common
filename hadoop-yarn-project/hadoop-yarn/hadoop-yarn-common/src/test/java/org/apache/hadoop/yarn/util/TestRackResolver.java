@@ -21,7 +21,6 @@ package org.apache.hadoop.yarn.util;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -71,12 +70,7 @@ public class TestRackResolver {
       Assert.assertTrue(numHost1 <= 1);
       return returnList;
     }
-    
-    @Override
-    public List<String> getDependency(String name) {
-      return Collections.emptyList();
-    }
-    
+
     @Override
     public void reloadCachedMappings() {
       // nothing to do here, since RawScriptBasedMapping has no cache.

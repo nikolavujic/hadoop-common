@@ -106,11 +106,6 @@ public class TestJobHistoryParsing {
     public List<String> resolve(List<String> names) {
       return Arrays.asList(new String[] { RACK_NAME });
     }
-    
-    @Override
-    public List<String> getDependency(String name) {
-      return Collections.emptyList();
-    }
 
     @Override
     public void reloadCachedMappings() {
