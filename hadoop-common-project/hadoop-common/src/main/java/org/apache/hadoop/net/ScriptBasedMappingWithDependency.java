@@ -189,7 +189,7 @@ public class ScriptBasedMappingWithDependency  extends ScriptBasedMapping
     @Override
     public String toString() {
       return super.toString() + ", " + dependencyScriptName != null ?
-          dependencyScriptName : NO_SCRIPT;
+          ("dependency script " + dependencyScriptName) : NO_SCRIPT;
     }
   }
 }
