@@ -358,6 +358,9 @@ Release 2.5.0 - UNRELEASED
     HADOOP-10535. Make the retry numbers in ActiveStandbyElector configurable.
     (jing9)
 
+    HADOOP-10322. Add ability to read principal names from a keytab.
+    (Benoy Antony and Daryn Sharp via kihwal)
+
   OPTIMIZATIONS
 
   BUG FIXES 
@@ -418,6 +421,9 @@ Release 2.5.0 - UNRELEASED
 
     HADOOP-10540. Datanode upgrade in Windows fails with hardlink error.
     (Chris Nauroth and Arpit Agarwal)
+
+    HADOOP-10508. RefreshCallQueue fails when authorization is enabled.
+    (Chris Li via wheat9)
 
 Release 2.4.1 - UNRELEASED
 
