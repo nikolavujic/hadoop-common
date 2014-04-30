@@ -78,6 +78,9 @@ public class TestScriptBasedMappingWithDependency extends TestCase {
   }
 
   private ScriptBasedMappingWithDependency createMapping(Configuration conf) {
-    return new ScriptBasedMappingWithDependency(conf);
+    ScriptBasedMappingWithDependency mapping = 
+        new ScriptBasedMappingWithDependency();
+    mapping.setConf(conf);
+    return mapping;
   }
 }

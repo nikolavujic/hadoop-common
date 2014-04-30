@@ -373,31 +373,11 @@ public class DatanodeManager {
     return host2DatanodeMap.getDatanodeByXferAddr(host, xferPort);
   }
 
-  /**
-   * Get data node by host name
-   *
-   * @param hostname
-   * @return DatanodeDescriptor or null if the node is not found.
-   * @throws IOException
-   */
-  public DatanodeDescriptor getDatanodeByHostName(String hostname) {
-    return host2DatanodeMap.getDataNodeByHostName(hostname);
+  /** @return the Host2NodesMap */
+  public Host2NodesMap getHost2DatanodeMap() {
+    return this.host2DatanodeMap;
   }
-  
-  public String getStringForHost2DatanodeMap() {
-    return host2DatanodeMap.toString();
-  }
-  
-  
-  /**
-   * Adds datanode in host2DataNodeMap. This interface is used in unit tests.
-   * @param datanode
-   */
-  @VisibleForTesting
-  void addToHost2DataNodeMap(DatanodeDescriptor datanode) {
-    this.host2DatanodeMap.add(datanode);
-  }
-  
+
   /**
    * Given datanode address or host name, returns the DatanodeDescriptor for the
    * same, or if it doesn't find the datanode, it looks for a machine local and

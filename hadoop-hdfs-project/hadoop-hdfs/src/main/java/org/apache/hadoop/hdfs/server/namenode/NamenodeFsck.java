@@ -173,7 +173,8 @@ public class NamenodeFsck {
     this.remoteAddress = remoteAddress;
     this.bpPolicy = BlockPlacementPolicy.getInstance(conf, null,
         networktopology,
-        namenode.getNamesystem().getBlockManager().getDatanodeManager());
+        namenode.getNamesystem().getBlockManager().getDatanodeManager()
+        .getHost2DatanodeMap());
     
     for (Iterator<String> it = pmap.keySet().iterator(); it.hasNext();) {
       String key = it.next();

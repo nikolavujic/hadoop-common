@@ -221,28 +221,6 @@ class Host2NodesMap {
       hostmapLock.readLock().unlock();
     }
   }
-  
-  /** get a data node by its hostname and port.
-   * @return DatanodeDescriptor if found; otherwise null.
-   */
-  public DatanodeDescriptor getDataNodeByHostNameAndPort(
-      String hostname, int port) {
-    if(hostname == null) {
-      return null;
-    }
-    
-    hostmapLock.readLock().lock();
-    try{
-      String ipAddr = mapHost.get(hostname);
-      if(ipAddr==null) {
-        return null;
-      } else {
-        return getDatanodeByXferAddr(ipAddr, port);
-      }
-    } finally {
-      hostmapLock.readLock().unlock();
-    }
-  }
 
   @Override
   public String toString() {

@@ -37,7 +37,7 @@ import org.apache.hadoop.fs.CommonConfigurationKeys;
  * that performs the getDependency work.
  * <p/>
  */
-@InterfaceAudience.Public
+@InterfaceAudience.Private
 @InterfaceStability.Evolving
 public class ScriptBasedMappingWithDependency  extends ScriptBasedMapping 
     implements DNSToSwitchMappingWithDependency {
@@ -46,8 +46,6 @@ public class ScriptBasedMappingWithDependency  extends ScriptBasedMapping
    */
   static final String DEPENDENCY_SCRIPT_FILENAME_KEY =
       CommonConfigurationKeys.NET_DEPENDENCY_SCRIPT_FILE_NAME_KEY;
-
-  private DNSToSwitchMappingWithDependency rawMapping;
 
   private Map<String, List<String>> dependencyCache = 
       new ConcurrentHashMap<String, List<String>>();
@@ -61,16 +59,6 @@ public class ScriptBasedMappingWithDependency  extends ScriptBasedMapping
    */
   public ScriptBasedMappingWithDependency() {
     super(new RawScriptBasedMappingWithDependency());
-    rawMapping = (DNSToSwitchMappingWithDependency) super.rawMapping;
-  }
-
-  /**
-   * Create an instance from the given configuration
-   * @param conf configuration
-   */
-  public ScriptBasedMappingWithDependency(Configuration conf) {
-    this();
-    setConf(conf);
   }
 
   /**
@@ -79,11 +67,6 @@ public class ScriptBasedMappingWithDependency  extends ScriptBasedMapping
    */
   private RawScriptBasedMappingWithDependency getRawMapping() {
     return (RawScriptBasedMappingWithDependency)rawMapping;
-  }
-
-  @Override
-  public Configuration getConf() {
-    return getRawMapping().getConf();
   }
 
   @Override
@@ -122,7 +105,7 @@ public class ScriptBasedMappingWithDependency  extends ScriptBasedMapping
     List<String> dependencies = dependencyCache.get(name);
     if (dependencies == null) {
       //not cached
-      dependencies = rawMapping.getDependency(name);
+      dependencies = getRawMapping().getDependency(name);
       if(dependencies != null) {
         dependencyCache.put(name, dependencies);
       }

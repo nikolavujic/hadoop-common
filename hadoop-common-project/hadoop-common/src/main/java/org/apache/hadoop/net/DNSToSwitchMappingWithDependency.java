@@ -27,7 +27,7 @@ import org.apache.hadoop.classification.InterfaceStability;
  * DNS-name/IP-address to RackID resolvers.
  *
  */
-@InterfaceAudience.Public
+@InterfaceAudience.Private
 @InterfaceStability.Evolving
 
 public interface DNSToSwitchMappingWithDependency extends DNSToSwitchMapping {

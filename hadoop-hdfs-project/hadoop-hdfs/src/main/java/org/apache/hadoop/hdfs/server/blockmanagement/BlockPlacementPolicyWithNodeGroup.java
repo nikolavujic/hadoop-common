@@ -48,7 +48,7 @@ public class BlockPlacementPolicyWithNodeGroup extends BlockPlacementPolicyDefau
 
   protected BlockPlacementPolicyWithNodeGroup(Configuration conf,  FSClusterStats stats,
       NetworkTopology clusterMap, DatanodeManager datanodeManager) {
-    initialize(conf, stats, clusterMap, datanodeManager);
+    initialize(conf, stats, clusterMap, host2datanodeMap);
   }
 
   protected BlockPlacementPolicyWithNodeGroup() {
@@ -57,8 +57,8 @@ public class BlockPlacementPolicyWithNodeGroup extends BlockPlacementPolicyDefau
   @Override
   public void initialize(Configuration conf,  FSClusterStats stats,
           NetworkTopology clusterMap, 
-          DatanodeManager datanodeManager) {
-    super.initialize(conf, stats, clusterMap, datanodeManager);
+          Host2NodesMap host2datanodeMap) {
+    super.initialize(conf, stats, clusterMap, host2datanodeMap);
   }
 
   /** choose local node of localMachine as the target.
@@ -254,13 +254,13 @@ public class BlockPlacementPolicyWithNodeGroup extends BlockPlacementPolicyDefau
    */
   private int addDependentNodesToExcludedNodes(DatanodeDescriptor chosenNode,
       Set<Node> excludedNodes) {
-    if (this.datanodeManager == null) {
+    if (this.host2datanodeMap == null) {
       return 0;
     }
     int countOfExcludedNodes = 0;
     for(String hostname : chosenNode.getDependentHostNames()) {
       DatanodeDescriptor node =
-          this.datanodeManager.getDatanodeByHostName(hostname);
+          this.host2datanodeMap.getDataNodeByHostName(hostname);
       if(node!=null) {
         if (excludedNodes.add(node)) {
           countOfExcludedNodes++;

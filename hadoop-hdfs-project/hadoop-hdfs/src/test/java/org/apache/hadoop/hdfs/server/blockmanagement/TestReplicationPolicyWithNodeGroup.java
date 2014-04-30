@@ -761,12 +761,12 @@ public class TestReplicationPolicyWithNodeGroup {
       }
     }
     
-    DatanodeManager datanodeManager = namenode.getNamesystem()
+    Host2NodesMap host2DatanodeMap = namenode.getNamesystem()
         .getBlockManager()
-        .getDatanodeManager();
+        .getDatanodeManager().getHost2DatanodeMap();
     for(int i=0; i<NUM_OF_DATANODES_FOR_DEPENDENCIES; i++) {
       cluster.add(dataNodesForDependencies[i]);
-      datanodeManager.addToHost2DataNodeMap(dataNodesForDependencies[i]);
+      host2DatanodeMap.add(dataNodesForDependencies[i]);
     }
     
     //add dependencies (node1 <-> node2, and node3<->node4)

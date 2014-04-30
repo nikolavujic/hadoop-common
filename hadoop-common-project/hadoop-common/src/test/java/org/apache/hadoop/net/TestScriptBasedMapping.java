@@ -39,6 +39,7 @@ public class TestScriptBasedMapping extends TestCase {
     conf.setInt(ScriptBasedMapping.SCRIPT_ARG_COUNT_KEY,
                 ScriptBasedMapping.MIN_ALLOWABLE_ARGS - 1);
     conf.set(ScriptBasedMapping.SCRIPT_FILENAME_KEY, "any-filename");
+    conf.set(ScriptBasedMapping.SCRIPT_FILENAME_KEY, "any-filename");
     ScriptBasedMapping mapping = createMapping(conf);
     List<String> names = new ArrayList<String>();
     names.add("some.machine.name");
